@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true" scan="true" scanPeriod="30 seconds">
+ <property name="PROJECT_NAME" value="service" />
+ <include optional="true" resource="com/hfjy/log/common-log.xml" />
+ <logger name="com.hfjy.student.dao" level="debug" additivity="false">
+  <appender-ref ref="CONSOLE" />
+  <appender-ref ref="TRACE_FILE" />
+ </logger>
+</configuration>

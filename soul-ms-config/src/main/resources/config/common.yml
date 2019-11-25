@@ -1,0 +1,100 @@
+server:
+  max-http-header-size: 8192 #8KB
+  compression:
+    enabled: false #是否启用响应压缩
+    min-response-size: 2048 #超过该值时启用压缩
+  http2:
+    enabled: false
+  undertow:
+    io-threads: 8
+    worker-threads: 1000
+    max-http-post-size: 5242880 #5MB
+spring:
+  mvc:
+    favicon:
+      enabled: true
+    locale: zh_cn
+    servlet:
+      load-on-startup: 1
+  jackson:
+    serialization: {INDENT_OUTPUT: true} #jackson format output
+  http:
+    encoding:
+      charset: UTF-8 # Charset of HTTP requests and responses. Added to the "Content-Type" header if not set explicitly.
+  servlet:
+    multipart:
+      enabled:  true
+      file-size-threshold: 10MB
+      max-file-size: 20MB
+      max-request-size: 10MB
+
+management:
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+hystrix:
+  command:
+    default:
+      circuitBreaker:
+        enabled: true
+        requestVolumeThreshold: 20
+        sleepWindowInMilliseconds: 5000
+        errorThresholdPercentage: 50
+      execution:
+        timeout:
+          #如果enabled设置为false，则请求超时交给ribbon控制,为true,则超时作为熔断根据
+          enabled: true
+        isolation:
+          strategy: THREAD  #还有SEMAPHORE模式
+          thread:
+            timeoutInMilliseconds: 30000
+  threadpool:
+    default:
+      coreSize: 20 #并发执行的最大线程数，默认10
+      maxQueueSize: 2000 #BlockingQueue的最大队列数，默认值-1
+      queueSizeRejectionThreshold: 1800 #即使maxQueueSize没有达到，达到queueSizeRejectionThreshold该值后，请求也会被拒绝，默认值5
+  stream:
+    dashboard:
+      intervalInMilliseconds: 2000 #每秒推送的hystrix数据间隔(通过archaius来加载读取的属性)
+
+feign:
+  hystrix:
+    enabled: false
+  client:
+    config:
+      default: #feign全局配置
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  httpclient:
+    max-connections-per-route: 500
+    max-connections: 2000
+    connection-timeout: 3000
+
+# ribbon 全局配置,使用@LoadBlance加resttemplate时超时配置需要指定resttemplate的
+ribbon:
+  eureka:
+    enabled: true
+  eager-load:
+    enabled: true #饥饿加载，避免在第一次请求创建客户端导致耗时较长
+    clients: controller,service,gateway
+  ConnectTimeout: 3000
+  ReadTimeout: 8000
+  MaxTotalHttpConnections: 2000
+  MaxConnectionsPerHost: 1000
+  MaxAutoRetries: 1
+  MaxAutoRetriesNextServer: 1
+  OkToRetryOnAllOperations: false  #true表示所有请求方法都会重试，false get请求会应用重试
+  #retryableStatusCodes: 404,502
+  ServerListRefreshInterval: 5000 #刷新服务列表时间
+
+# 直接使用logback-spring.xml文件可能会多产生一个IS_UNDEFINED的日志目录，可通过下方配置指定一个非logback-spring.xml的配置文件名称
+logging:
+  config: 'classpath:logback-config.xml'

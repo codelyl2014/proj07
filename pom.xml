@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<modules>
+		<module>soul-ms-gateway</module>
+		<module>soul-ms-discover</module>
+		<module>soul-ms-config</module>
+		<module>soul-ms-studentservice</module>
+		<module>soul-ms-schooling</module>
+		<module>soul-ms-api</module>
+		<module>soul-ms-common</module>
+	</modules>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.1.6.RELEASE</version>
+	</parent>
+	<groupId>com.hfjy</groupId>
+	<artifactId>hfjy-soul-ms</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<url>http://www.example.com</url>
+	<description>海风教育灵魂战队微服务</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+		<spring.cloud.version>Greenwich.SR1</spring.cloud.version>
+		<fastjson.version>1.2.54</fastjson.version>
+		<mybatis-plus-boot-starter.version>3.0.7.1</mybatis-plus-boot-starter.version>
+		<api.version>1.0-SNAPSHOT</api.version>
+		<common.version>1.0-SNAPSHOT</common.version>
+	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- spring cloud依赖 -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring.cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- fastjson -->
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>fastjson</artifactId>
+				<version>${fastjson.version}</version>
+			</dependency>
+			<!-- mapper plus -->
+			<dependency>
+				<groupId>com.baomidou</groupId>
+				<artifactId>mybatis-plus-boot-starter</artifactId>
+				<version>${mybatis-plus-boot-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.baomidou</groupId>
+				<artifactId>mybatis-plus-generator</artifactId>
+				<version>${mybatis-plus-boot-starter.version}</version>
+			</dependency>
+			<!-- studentService api -->
+			<dependency>
+				<groupId>com.hfjy</groupId>
+				<artifactId>soul-ms-api</artifactId>
+				<version>${api.version}</version>
+			</dependency>
+			<!-- common modul -->
+			<dependency>
+				<groupId>com.hfjy</groupId>
+				<artifactId>soul-ms-common</artifactId>
+				<version>${common.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>1.2.0</version>
+				<!-- 执行Dockerfile 打包镜像 -->
+				<configuration>
+					<!-- 默认dockerclient会使用系统的环境变量DOCKER_HOST和DOCKER_CERT_PATH（指定ssl证书路径），如果是构建镜像到本地docker环境中，在windowns上默认会配置上上述的两个变量 
+						当然也可以通过下方的dockerHost和dockerCertPath标签指定，但是当想构建镜像到远程服务器的docker环境中时，如果本地安装了docker环境需要重命名掉$User/.docker目录为别的，否则插件会抛异常ssl不对， 
+						如果服务器端是没有tls，那么配置http协议的即可，tcp的不支持。 -->
+					<!-- 配置docker服务对外管理端口地址，这里只可以配置https的且要指定dockerCertPath(本地要装docker环境)，也可以设置环境变量DOCKER_HOST=tcp://192.168.2.52:2375 -->
+					<dockerHost>http://192.168.2.52:2375</dockerHost>
+					<!--<imageName>${build.finalName}:${project.version}</imageName> 推送到本地仓库 -->
+					<imageName>harbor.hfjy.com/cup-201906-07/${build.finalName}:${project.version}</imageName> <!-- 推送到远程仓库 -->
+					<registryUrl>harbor.hfjy.com</registryUrl>
+					<serverId>docker-harbor</serverId> <!-- maven setting中server配置id -->
+					<!-- 设置docker目录,该目录下包含Dockerfile,当指定dockerDirectory后baseImage,maintainer,cmd,entryPoint 
+						将被忽略 -->
+					<dockerDirectory>${project.basedir}/src/main/docker</dockerDirectory>
+					<skipDockerBuild>false</skipDockerBuild>
+					<!-- optionally overwrite tags every time image is built with docker:build -->
+					<forceTags>true</forceTags>
+					<resources>
+						<resource>
+							<!-- 复制构建后的jar包到project.build.directory/docker目录,然后在Dockerfile中就可以使用ADD 
+								相对路径来将该jar包添加到容器中 -->
+							<targetPath>/</targetPath>
+							<directory>${project.build.directory}</directory>
+							<include>${project.build.finalName}.jar</include>
+						</resource>
+					</resources>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

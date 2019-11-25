@@ -1,0 +1,38 @@
+#镜像构建步骤，将当前Dockerfile复制到某个目录下，然后执行 docker build -t java8:1.0.0 . 即可
+
+# 基础镜像
+FROM alpine:3.9.4
+#作者信息
+MAINTAINER JRE Docker Maintainers "husixu013846@hfjy.com"
+# 修改alpine软件安装包源
+RUN echo "http://mirrors.aliyun.com/alpine/latest-stable/main/" > /etc/apk/repositories && \
+    echo "http://mirrors.aliyun.com/alpine/latest-stable/community/" >> /etc/apk/repositories
+
+# 安装需要的软件[curl bash tree tzdata(时区包)]
+RUN apk update && \
+    apk add --no-cache ca-certificates && \
+    apk add --no-cache curl bash tree tzdata && \
+    cp -rf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+# 定义环境变量
+ENV PATH /usr/local/bin:${PATH}
+
+# 安装jre 需要的基础
+RUN apk add --nocache openjdk8-jre-base && \
+    rm -rf /var/cache/apk/*
+
+#设置java环境变量
+ENV JAVA_HOME /usr/lib/jvm/default-jvm
+ENV PATH ${PATH}:${JAVA_HOME}/bin:${JAVA_HOME}/jre/bin
+
+#修改java.seurity
+RUN sed -i 's/securerandom.source=file\:\/dev\/random/securerandom.source=file\:\/dev\/urandom/' /usr/lib/jvm/default-jvm/jre/lib/security/java.security
+
+#设置要安装的alpine jre的版本
+ENV JAVA_ALPINE_VERSION 8.212.04-r0
+RUN set -x \
+    \
+    && apk add --no-cache \
+    \
+    openjdk8-jre="$JAVA_ALPINE_VERSION"
+

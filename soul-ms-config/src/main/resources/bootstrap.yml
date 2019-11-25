@@ -1,0 +1,64 @@
+spring:
+  profiles:
+    active: native  #使用native配置
+  application:
+    name: config-center
+  mvc:
+    favicon:
+      enabled: true
+    locale: zh_cn
+  jackson:
+    serialization: {INDENT_OUTPUT: true} #jackson format output
+  http:
+    encoding:
+      charset: UTF-8
+  cloud:
+    config:
+      server:
+        native:
+          search-locations:
+            - 'classpath:/config' #在指定目录下查找配置
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${discoverAddr:http://localhost:8001/eureka/}
+  instance:
+    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 10
+    prefer-ip-address: true #显示Ip地址
+
+management:
+  endpoint:
+    health:
+      show-details: always
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+server:
+  port: 8002
+  servlet:
+    context-path: /
+  max-http-header-size: 8192 #8KB
+  undertow:
+    io-threads: 8
+    worker-threads: 1000
+    max-http-post-size: 5242880 #5MB
+# 指定日志配置文件
+logging:
+  config: classpath:logback-config.xml
+info:
+  author: hsx
+  version: 1.0
+  comment: 配置中心
+
+log:
+  level: warn
+  path:  /app/logs/${container_id:${HOSTNAME:localhost}}
+
+

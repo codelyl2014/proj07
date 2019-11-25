@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: discover
+  mvc:
+    favicon:
+      enabled: true
+    locale: zh_cn
+  jackson:
+    serialization: {INDENT_OUTPUT: true} #jackson format output
+  http:
+    encoding:
+      charset: UTF-8 # Charset of HTTP requests and responses. Added to the "Content-Type" header if not set explicitly.
+server:
+  port: 8001
+  servlet:
+    context-path: /
+  max-http-header-size: 8192 #8KB
+  undertow:
+    io-threads: 8
+    worker-threads: 1000
+    max-http-post-size: 5242880 #5MB
+eureka:
+  server:
+    enable-self-preservation: false # 关闭eureka自我保护模式
+    eviction-interval-timer-in-ms: 3000 #启用主动失效，并且每次主动失效检测间隔为3s
+    use-read-only-response-cache: false
+  client:
+    fetch-registry: true
+    register-with-eureka: false
+    service-url:
+      defaultZone: ${eureka_defaultzone:http://localhost:8001/eureka/}
+  instance:
+    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 10
+    hostname: localhost
+    prefer-ip-address: true #显示Ip地址
+# 直接使用logback-spring.xml文件可能会多产生一个IS_UNDEFINED的日志目录，可通过下方配置指定一个非logback-spring.xml的配置文件名称
+logging:
+  config: 'classpath:logback-config.xml'
+log:
+  level: info
+  path:  /app/logs/${container_id:${HOSTNAME:localhost}}
+info:
+  author: hsx
+  version: 1.0
+
+

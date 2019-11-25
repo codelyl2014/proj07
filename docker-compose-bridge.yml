@@ -1,0 +1,86 @@
+version: "3"  # docker-compose 3.x的file format
+services:
+  discover:
+    image: harbor.hfjy.com/cup-201906-07/discover:1.3-SNAPSHOT
+    networks:
+      - project07
+    ports:
+      - "8001:8001"  #将容器的8001端口绑定到宿主机的8001
+    volumes: #卷映射
+      - /data/logs/discover:/app/logs
+    sysctls: #容器内核参数。
+      net.core.somaxconn: 1024
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+
+
+  configCenter:
+    image: harbor.hfjy.com/cup-201906-07/config:1.0-SNAPSHOT
+    networks:
+      - project07
+    ports:
+      - "8002"  #将容器的8002端口绑定到宿主机的任意端口
+    entrypoint: sh -c '/app/wait-for-it.sh discover:8001 -t 0  -- java -Djava.security.egd=file:/dev/./urandom -jar /app/config.jar'
+    volumes: #卷映射
+      - /data/logs/config:/app/logs
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    depends_on: #依赖的容器
+      - discover
+    environment: #环境变量
+      - discoverAddr=http://192.168.2.52:8001/eureka/
+
+  gateway:
+    image: harbor.hfjy.com/cup-201906-07/gateway:1.0-SNAPSHOT
+    networks:
+      - project07
+    ports:
+      - "8003:8003"
+    entrypoint: sh -c '/app/wait-for-it.sh configCenter:8002 -t 0  -- java -Djava.security.egd=file:/dev/./urandom -jar /app/gateway.jar'
+    volumes: #卷映射
+      - /data/logs/gateway:/app/logs
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    depends_on: #依赖的容器
+      - configCenter
+    environment: #环境变量
+      - discoverAddr=http://192.168.2.52:8001/eureka/
+
+  controller:
+    image: harbor.hfjy.com/cup-201906-07/controller:1.0-SNAPSHOT
+    networks:
+      - project07
+    ports:
+      - "8004"
+    entrypoint: sh -c '/app/wait-for-it.sh configCenter:8002 -t 0  -- java -Djava.security.egd=file:/dev/./urandom -jar /app/controller.jar'
+    volumes: #卷映射
+      - /data/logs/controller:/app/logs
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    depends_on: #依赖的容器
+      - configCenter
+    environment: #环境变量
+      - discoverAddr=http://192.168.2.52:8001/eureka/
+
+  service:
+    image: harbor.hfjy.com/cup-201906-07/service:1.0-SNAPSHOT
+    networks:
+      - project07
+    ports:
+      - "8005"
+    entrypoint: sh -c '/app/wait-for-it.sh configCenter:8002 -t 0  -- java -Djava.security.egd=file:/dev/./urandom -jar /app/service.jar'
+    volumes: #卷映射
+      - /data/logs/service:/app/logs
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    depends_on: #依赖的容器
+      - configCenter
+    environment: #环境变量
+      - discoverAddr=http://192.168.2.52:8001/eureka/
+      - db_host=mysql-dev.hfjy.red
+      - db_port=3306
+      - db_name=hackathon
+      - db_user=hackathon_read
+      - db_password=YbMmVp51gakQySvtHsbs
+
+networks:
+  project07:
